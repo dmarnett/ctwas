@@ -76,8 +76,8 @@ index_regions <- function(regionfile,
   }
 
   regionlist <- list()
-  for (b in 1:length(exprvarfs)){
-
+  relevant_chrs=as.character(unique(reg$chr))
+  for (b in relevant_chrs){
     if (!is.null(pvarfs)){
       # get snp info (from pvarf file)
       pvarf <- pvarfs[b]
@@ -87,7 +87,7 @@ index_regions <- function(regionfile,
       ld_Rf <- ld_Rfs[b]
       snpinfo <- read_ld_Rvar(ld_Rf)
     }
-
+    
     if (isTRUE(unique(snpinfo$chrom) != b)){
       stop("Input genotype file not split by chromosome or not in correct order")
     }
@@ -138,10 +138,8 @@ index_regions <- function(regionfile,
         gidx <- which(geneinfo$chrom == b & geneinfo$p0 >= rn.start & geneinfo$p0 < rn.stop
                       & geneinfo$keep == 1) # unique assignment to regions
       }
-
       sidx <- which(snpinfo$chrom == b & snpinfo$pos >= rn.start & snpinfo$pos < rn.stop
                     & snpinfo$keep == 1 & snpinfo$thin_tag == 1)
-
       if (length(gidx) + length(sidx) < minvar) {next}
 
       gid <- geneinfo$id[gidx]
@@ -336,7 +334,7 @@ filter_regions <- function(regionlist, group_prior, prob_single = 0.8){
 #' regionlist need to contain at least 1 non-empty
 region2core <- function(regionlist, ncore = 1){
   dflist <- list()
-  for (b in 1:length(regionlist)){
+  for (b in names(regionlist)){
     if (length(regionlist[[b]]) > 0){
       dflist[[b]] <- data.frame("b" = b, "rn"= names(regionlist[[b]]), stringsAsFactors = FALSE)
     }

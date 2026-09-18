@@ -119,31 +119,25 @@ ctwas <- function(pgenfs,
 
   loginfo('ctwas started ... ')
 
-  if (length(pgenfs) != 22){
-    warning("Not all pgen files for 22 chromosomes are provided.")
-  }
-
-  if (length(exprfs) != 22){
-    warning("Not all imputed expression files for 22 chromosomes are provided.")
-  }
-
-  if (length(exprfs) != length(pgenfs)){
-    stop("Genotype pgen file and imputation files are not matching...")
-  }
-
-  if (is.null(ld_regions_custom)){
+  if (is.null(ld_regions_custom)) {
     ld_regions <- match.arg(ld_regions)
     ld_regions_version <- match.arg(ld_regions_version)
     regionfile <- system.file("extdata", "ldetect",
                               paste0(ld_regions, "." , ld_regions_version, ".bed"), package="ctwas")
+
   } else {
     regionfile <- ld_regions_custom
   }
-
+  reg <- read.table(regionfile, header = T, stringsAsFactors = F)
+  relevant_chrs <- as.character(unique(reg$chr))
+  pgenfs <- sapply(relevant_chrs,FUN=function(x) gsub('#CHR',x,pgenfs))
+  exprfs <- sapply(relevant_chrs,FUN=function(x) gsub('#CHR',x,exprfs))
   loginfo("LD region file: %s", regionfile)
 
   pvarfs <- sapply(pgenfs, prep_pvar, outputdir = outputdir)
+  names(pvarfs) <- relevant_chrs
   exprvarfs <- sapply(exprfs, prep_exprvar)
+  names(exprvarfs) <- relevant_chrs
 
   if (thin <=0 | thin > 1){
     stop("thin value needs to be in (0,1]")
@@ -153,7 +147,7 @@ ctwas <- function(pgenfs,
                               pvarfs = pvarfs,
                               thin = thin)
 
-  temp_regs <- lapply(1:22, function(x) cbind(x,
+  temp_regs <- lapply(relevant_chrs, function(x) cbind(x,
                    unlist(lapply(regionlist[[x]], "[[", "start")),
                      unlist(lapply(regionlist[[x]], "[[", "stop"))))
                  
